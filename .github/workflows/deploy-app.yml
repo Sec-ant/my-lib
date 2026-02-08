@@ -1,0 +1,51 @@
+name: Deploy App to Deno
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Build App
+        run: pnpm -s build:app
+
+      - name: Upload to Deno Deploy
+        uses: denoland/deployctl@v1
+        with:
+          project: ${{ vars.DENO_DEPLOY_PROJECT }}
+          entrypoint: https://deno.land/std/http/file_server.ts
+          root: dist-app
+          include: |
+            dist-app/**
+
+      - name: Comment Deployment URL
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚀 **Preview deployed!**\\n\\nYour changes are live at: https://${{ vars.DENO_DEPLOY_PROJECT }}.deno.dev'
+            })

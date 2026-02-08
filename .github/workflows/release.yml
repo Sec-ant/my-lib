@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  packages: write
+  id-token: write
+
+env:
+  NPM_CONFIG_PROVENANCE: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Type Check
+        run: pnpm -s type-check
+
+      - name: Lint
+        run: pnpm -s lint
+
+      - name: Test
+        run: pnpm -s test:run
+
+      - name: Build
+        run: pnpm -s build
+
+      - name: Get Next Package Version
+        id: package-version
+        run: echo "version=$(pnpm -s changeset status --output=release.json && jq -r '.releases[0].newVersion // '$(npm pkg get version)'' release.json && rm release.json)" >> $GITHUB_OUTPUT
+
+      - name: Create Release Pull Request or Publish to NPM
+        id: changesets
+        uses: changesets/action@e0145edc7d9d8679003495b11f87bd8ef63c0cba # v1.5.3
+        with:
+          publish: pnpm -s changeset publish
+          commit: "chore(release): v${{ steps.package-version.outputs.version }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
