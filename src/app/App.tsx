@@ -1,20 +1,27 @@
-import { useState } from "react";
 import { greeting } from "../lib";
+import ThemeToggle from "./components/ThemeToggle";
 
 function App() {
-  const [count, setCount] = useState(0);
-
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-8">
-      <h1 className="mb-4 font-bold text-4xl">Library Dev App</h1>
-      <p className="mb-4 text-lg">{greeting("World")}</p>
-      <button
-        type="button"
-        onClick={() => setCount((c) => c + 1)}
-        className="rounded bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600"
-      >
-        Count: {count}
-      </button>
+    <div className="flex h-dvh w-full flex-col gap-0.5 overflow-hidden">
+      {/* Navbar */}
+      <div className="navbar justify-between bg-base-100 px-4 shadow-sm">
+        <span className="truncate font-bold text-xl">My Lib</span>
+        <div className="flex-none">
+          {/* Dark Mode Toggle */}
+          <ThemeToggle />
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex flex-1 items-center justify-center bg-base-200 p-8">
+        <div className="text-center">
+          <p className="mb-4 text-lg">{greeting("World")}</p>
+          <button type="button" onClick={() => {}} className="btn btn-primary">
+            Get Started
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
